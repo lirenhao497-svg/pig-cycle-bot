@@ -1,0 +1,76 @@
+// 猪周期量化监控 - 周期阶段 + 反转面板（中右侧）
+
+import { cn, stageColor, bullCountColor } from '../utils'
+import type { CycleStage } from '../types'
+
+const STAGES = ['深度亏损', '极端低位', '偏弱', '中性', '高位']
+// 后端 stage 字段值到中文的映射
+const STAGE_MAP: Record<string, string> = {
+  'deep_loss': '深度亏损',
+  'extreme_low': '极端低位',
+  'weak': '偏弱',
+  'neutral': '中性',
+  'high': '高位',
+}
+
+interface CyclePanelProps {
+  data?: CycleStage
+  isLoading: boolean
+}
+
+/** 周期位置 + 反转面板组合卡片 */
+export default function CyclePanel({ data, isLoading }: CyclePanelProps) {
+  if (isLoading) {
+    return <div className="rounded-xl bg-slate-800 border border-slate-700/50 p-6 h-full"><div className="skeleton h-48" /></div>
+  }
+  if (!data) {
+    return <div className="rounded-xl bg-slate-800 border border-slate-700/50 p-6 flex items-center justify-center text-slate-500">暂无周期数据</div>
+  }
+
+  // 优先使用 stage_label（中文），回落 stage（英文）
+  const rawStage = data.stage_label || data.label || data.stage || ''
+  const currentStage = STAGE_MAP[rawStage] || rawStage.split('（')[0] || '未知'
+  const currentIdx = STAGES.indexOf(currentStage)
+  const bc = data.bull_count ?? 0
+
+  return (
+    <div className="rounded-xl bg-slate-800 border border-slate-700/50 p-6 h-full flex flex-col gap-4">
+      {/* 周期位置 */}
+      <div>
+        <div className="text-sm text-slate-400 mb-3">周期位置</div>
+        <div className="space-y-1">
+          {STAGES.map((s, i) => {
+            const isActive = i === currentIdx
+            const isPast = currentIdx > i
+            return (
+              <div key={s} className={cn(
+                'flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors',
+                isActive ? 'bg-slate-700/60 font-semibold' : isPast ? 'text-slate-600' : 'text-slate-500',
+              )}>
+                <div className={cn('w-2.5 h-2.5 rounded-full', isActive ? 'bg-sky-500' : isPast ? 'bg-slate-700' : 'bg-slate-800 border border-slate-700')} />
+                <span className={isActive ? stageColor(s) : ''}>{s}</span>
+                {isActive && <span className="ml-auto text-xs text-sky-400">← 当前</span>}
+              </div>
+            )
+          })}
+        </div>
+        <div className="mt-2 text-xs text-slate-500 font-mono-num">猪粮比 {data.pgr?.toFixed(2)}</div>
+      </div>
+
+      {/* 分隔线 */}
+      <div className="border-t border-slate-700/50" />
+
+      {/* 反转面板 */}
+      <div>
+        <div className="text-sm text-slate-400 mb-2">反转面板</div>
+        <div className={cn('text-3xl font-bold font-mono-num', bullCountColor(bc))}>
+          {bc}
+          <span className="text-base text-slate-500">/4</span>
+        </div>
+        <div className="mt-1 text-xs text-slate-500">
+          {bc >= 3 ? '强烈反转信号，考虑做多' : bc >= 2 ? '部分条件满足' : '观望等待更多信号'}
+        </div>
+      </div>
+    </div>
+  )
+}

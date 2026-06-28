@@ -1,0 +1,28 @@
+// src/App.tsx
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import Layout from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import Backtest from "./pages/Backtest";
+import DataExplore from "./pages/DataExplore";
+import Simulation from "./pages/Simulation";
+import L1Watchlist from "./pages/L1Watchlist";
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/backtest" element={<Backtest />} />
+          <Route path="/explore" element={<DataExplore />} />
+          <Route path="/simulation" element={<Simulation />} />
+          <Route path="/l1" element={<L1Watchlist />} />
+        </Routes>
+      </Layout>
+    </ErrorBoundary>
+  );
+}
+
+export default App;

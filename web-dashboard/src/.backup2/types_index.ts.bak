@@ -1,0 +1,108 @@
+// src/types/index.ts
+
+// 最新市场数据（含选填涨跌字段）
+export interface LatestData {
+  date: string;
+  pig_grain_ratio: number | null;
+  muyuan_close: number | null;
+  wenshi_close: number | null;
+  futures_close: number | null;
+  hog_index_close: number | null;
+  muyuan_change?: number | null;
+  futures_change?: number | null;
+  index_change?: number | null;
+  pgr_change?: number | null;
+}
+
+// 信号状态
+export interface SignalData {
+  date: string;
+  status: "空仓" | "清仓避险" | "观望";
+  pgr_golden_cross: boolean;
+  muyuan_above_ma20: boolean;
+  muyuan_vol_contract: boolean;
+  pig_grain_ratio: number;
+  trigger_reason: string | null;
+}
+
+// 周期阶段
+export interface CycleStage {
+  date: string;
+  pgr: number;
+  stage: string;           // 英文：extreme_low, weak, neutral, high 等
+  stage_label: string;     // 中文长字符串："极端低位..."
+  label: string;           // 判定标签
+}
+
+// 推送记录（与数据库 daily_trade_log 表字段匹配）
+export interface TradeLog {
+  id: number;
+  date: string;
+  action: string;
+  advice: string;
+  pig_grain_ratio?: number;
+  interval_label?: string;
+  signal_a_muyuan?: number;
+  position_pct?: number;
+  stop_loss_pct?: number;
+  stock_price?: number | null;
+  created_at?: string;
+}
+
+// 策略G/模拟盘交易记录（匹配数据库 sim_positions 表）
+export interface SimPosition {
+  id: number;
+  entry_date: string;
+  entry_price: number;
+  pgr: number | null;
+  exit_planned?: string;
+  exit_date?: string | null;
+  exit_price?: number | null;
+  profit_pct: number;
+  status: string;
+  hold_days?: number;
+  created_at?: string;
+}
+
+// 模拟盘统计
+export interface SimStats {
+  total_trades: number;
+  win_rate: number;
+  avg_return: number;
+  max_return: number;
+  max_loss: number;
+}
+
+// 模拟盘数据
+export interface SimulationData {
+  current: SimPosition[];
+  history: SimPosition[];
+  stats: SimStats;
+}
+
+// L1观察记录（匹配数据库 l1_watchlist 表）
+export interface L1WatchItem {
+  id: number;
+  entry_date: string;
+  pgr: number;
+  consec: number;
+  status: string;
+  created_at?: string;
+}
+
+// 图表数据点
+export interface ChartDataPoint {
+  date: string;
+  pig_grain_ratio: number;
+  muyuan_close: number;
+  wenshi_close: number;
+  futures_close: number;
+  hog_index_close: number;
+}
+
+// 季节性数据
+export interface SeasonalityData {
+  months: number[];
+  avg_pgr: number[];
+  avg_muyuan: number[];
+}

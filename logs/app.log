@@ -1,0 +1,78 @@
+2026-06-25 23:13:08 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:13:09 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:13:36 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:13:37 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:14:02 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:14:07 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:14:27 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:14:29 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:14:51 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:14:54 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:15:30 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:15:30 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:15:33 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:15:33 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 饲料价格数据...
+2026-06-25 23:15:36 | WARNING | pig_price_cpcti | 未提取到完整的饲料价格数据
+2026-06-25 23:15:36 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:15:36 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:16:02 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:16:02 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:16:02 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:16:05 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:16:06 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:16:06 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:24:48 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:24:48 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:24:48 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:24:51 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:24:51 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:24:51 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:25:21 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:25:27 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:26:21 | INFO    | price_service | 尝试数据源: 正大猪博士
+2026-06-25 23:26:21 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:26:21 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:26:24 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:26:24 | INFO    | price_service | 数据源 正大猪博士 抓取成功，共 28 条
+2026-06-25 23:26:24 | INFO    | price_service | 尝试数据源: 正大猪博士
+2026-06-25 23:26:24 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:26:24 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:26:27 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:26:27 | INFO    | price_service | 数据源 正大猪博士 抓取成功，共 28 条
+2026-06-25 23:26:27 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:26:27 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:26:27 | INFO    | price_service | PigPriceService已关闭
+2026-06-25 23:34:44 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:34:44 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:34:44 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:34:47 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:34:47 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:34:47 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:34:53 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:34:53 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:34:53 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:34:56 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:34:56 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:34:56 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:41:48 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:45:13 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:45:13 | INFO    | price_service | 尝试数据源: 正大猪博士
+2026-06-25 23:45:13 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:45:13 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:45:16 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:45:16 | INFO    | price_service | 数据源 正大猪博士 抓取成功，共 28 条
+2026-06-25 23:45:17 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:45:17 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:45:17 | INFO    | price_service | PigPriceService已关闭
+2026-06-25 23:48:10 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:48:10 | INFO    | price_service | 尝试数据源: 正大猪博士
+2026-06-25 23:48:10 | INFO    | gateway | DataGateway初始化完成，重试次数=3，超时=10s
+2026-06-25 23:48:10 | INFO    | pig_price_cpcti | 开始抓取 正大猪博士 生猪价格数据...
+2026-06-25 23:48:13 | INFO    | pig_price_cpcti | 成功抓取 28 条分省价格数据
+2026-06-25 23:48:13 | INFO    | price_service | 数据源 正大猪博士 抓取成功，共 28 条
+2026-06-25 23:48:13 | INFO    | gateway | DataGateway会话已关闭
+2026-06-25 23:48:13 | INFO    | pig_price_cpcti | 正大猪博士 爬虫会话已关闭
+2026-06-25 23:48:13 | INFO    | price_service | PigPriceService已关闭
+2026-06-25 23:53:41 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:54:27 | INFO    | db | 数据库初始化完成，4张表已就绪
+2026-06-25 23:55:27 | INFO    | db | 数据库初始化完成，4张表已就绪

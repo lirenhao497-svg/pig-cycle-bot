@@ -1,0 +1,16 @@
+[build]
+  command = "pip install -r requirements.txt"
+
+[deploy]
+  startCommand = "uvicorn web-dashboard.backend:app --host 0.0.0.0 --port $PORT"
+  healthcheckPath = "/api/latest"
+  healthcheckInterval = 60
+  healthcheckTimeout = 10
+  healthcheckRetries = 3
+
+[volumes]
+  "data" = "/app/data"
+
+[[volumes.mounts]]
+  source = "data"
+  destination = "/app/data"

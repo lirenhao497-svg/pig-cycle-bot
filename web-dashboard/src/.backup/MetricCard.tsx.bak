@@ -1,0 +1,33 @@
+// 猪周期量化监控 - 核心指标卡片
+
+import { TrendingUp, TrendingDown } from 'lucide-react'
+import { cn, formatPrice, formatChange, changeColor } from '../utils'
+
+interface MetricCardProps {
+  title: string
+  value: number | null | undefined
+  change?: number | null | undefined
+  decimals?: number
+  suffix?: string
+  /** 是否使用等宽字体 */
+  mono?: boolean
+}
+
+/** 顶部 4 列核心指标卡片：猪粮比 / 牧原收盘 / 期货 / 畜牧指数 */
+export default function MetricCard({ title, value, change, decimals = 2, suffix = '', mono = true }: MetricCardProps) {
+  return (
+    <div className="rounded-xl bg-slate-800 border border-slate-700/50 p-6 transition-colors duration-200 hover:border-slate-600">
+      <div className="text-sm text-slate-400 mb-2">{title}</div>
+      <div className={cn('text-2xl font-semibold text-slate-50 flex items-baseline gap-2', mono && 'font-mono-num')}>
+        {formatPrice(value, decimals)}
+        {suffix && <span className="text-base text-slate-400">{suffix}</span>}
+      </div>
+      {change != null && (
+        <div className={cn('flex items-center gap-1 mt-1 text-sm font-mono-num', changeColor(change))}>
+          {change > 0 ? <TrendingUp size={14} /> : change < 0 ? <TrendingDown size={14} /> : null}
+          <span>{formatChange(change)}</span>
+        </div>
+      )}
+    </div>
+  )
+}

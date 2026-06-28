@@ -1,0 +1,117 @@
+// 猪周期量化监控 - API 封装（TanStack Query）
+
+import { useQuery } from '@tanstack/react-query'
+import type { LatestData, SignalData, CycleStage, TradeLogItem, SimPosition, SimulationData, ChartDataPoint, SeasonalityData, L1WatchItem } from '../types'
+
+// 使用 Vite proxy，避免 CORS 问题
+const API_BASE = '/api'
+
+/** 通用 fetch 封装 */
+async function fetchApi<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`)
+  if (!res.ok) throw new Error(`API 错误: ${res.status}`)
+  return res.json()
+}
+
+/** 带参数 fetch */
+async function fetchApiParams<T>(path: string, params: Record<string, string>): Promise<T> {
+  const qs = new URLSearchParams(params).toString()
+  const res = await fetch(`${API_BASE}${path}?${qs}`)
+  if (!res.ok) throw new Error(`API 错误: ${res.status}`)
+  return res.json()
+}
+
+// ========== 实时监控页面 Hooks ==========
+
+/** 获取最新行情（60秒轮询） */
+export function useLatestData() {
+  return useQuery<LatestData>({
+    queryKey: ['latest'],
+    queryFn: () => fetchApi<LatestData>('/latest'),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: 3,
+  })
+}
+
+/** 获取信号状态（60秒轮询） */
+export function useSignals() {
+  return useQuery<SignalData>({
+    queryKey: ['signals'],
+    queryFn: () => fetchApi<SignalData>('/signals'),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: 3,
+  })
+}
+
+/** 获取周期阶段 */
+export function useCycleStage(refetchMs = 60_000) {
+  return useQuery<CycleStage>({
+    queryKey: ['cycle_stage'],
+    queryFn: () => fetchApi<CycleStage>('/cycle_stage'),
+    refetchInterval: refetchMs,
+    staleTime: 30_000,
+  })
+}
+
+/** 获取推送日志 */
+export function useTradeLog(limit = 5) {
+  return useQuery<TradeLogItem[]>({
+    queryKey: ['trade_log', limit],
+    queryFn: () => fetchApiParams<TradeLogItem[]>('/trade_log', { limit: String(limit) }),
+    refetchInterval: 60_000,
+  })
+}
+
+// ========== 策略回溯页面 Hooks ==========
+
+/** 获取策略G历史交易 */
+export function useStrategyG() {
+  return useQuery<SimPosition[]>({
+    queryKey: ['strategy_g'],
+    queryFn: () => fetchApi<SimPosition[]>('/strategy_g'),
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** 获取时间序列数据 */
+export function useChartData(start = '2022-01-04', end = '2026-06-28') {
+  return useQuery<ChartDataPoint[]>({
+    queryKey: ['chart_data', start, end],
+    queryFn: () => fetchApiParams<ChartDataPoint[]>('/chart_data', { start, end }),
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** 获取季节性数据 */
+export function useSeasonality() {
+  return useQuery<SeasonalityData>({
+    queryKey: ['seasonality'],
+    queryFn: () => fetchApi<SeasonalityData>('/seasonality'),
+    staleTime: 60 * 60_000,
+  })
+}
+
+// ========== 模拟盘 Hooks ==========
+
+/** 获取模拟盘全数据 */
+export function useSimulation() {
+  return useQuery<SimulationData>({
+    queryKey: ['simulation'],
+    queryFn: () => fetchApi<SimulationData>('/simulation'),
+    staleTime: 5 * 60_000,
+    refetchInterval: 60_000,
+  })
+}
+
+// ========== L1 观察清单 Hooks ==========
+
+/** 获取 L1 观察清单 */
+export function useL1Watchlist() {
+  return useQuery<L1WatchItem[]>({
+    queryKey: ['l1_watchlist'],
+    queryFn: () => fetchApi<L1WatchItem[]>('/l1_watchlist'),
+    staleTime: 60_000,
+  })
+}

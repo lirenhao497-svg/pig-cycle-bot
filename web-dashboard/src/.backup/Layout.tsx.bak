@@ -1,0 +1,72 @@
+// 猪周期量化监控 - 导航栏组件
+
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { BarChart3, LayoutDashboard, LineChart, ScrollText, Eye } from 'lucide-react'
+import { cn } from '../utils'
+
+const navItems = [
+  { path: '/', label: '监控大屏', icon: LayoutDashboard },
+  { path: '/backtest', label: '策略回测', icon: BarChart3 },
+  { path: '/explore', label: '数据探索', icon: LineChart },
+  { path: '/simulation', label: '模拟盘', icon: ScrollText },
+  { path: '/l1', label: 'L1观察', icon: Eye },
+]
+
+/** 顶部导航栏 */
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (
+    <div className="min-h-screen bg-surface flex flex-col">
+      {/* 顶部导航 */}
+      <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-sm border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xl">🐷</span>
+            <span className="font-bold text-lg text-slate-50 hidden sm:inline">
+              猪周期量化
+            </span>
+          </div>
+
+          {/* 导航项 —— 桌面端 */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200',
+                    isActive
+                      ? 'bg-slate-700/60 text-slate-50'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60',
+                  )
+                }
+              >
+                <item.icon size={16} />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* 移动端 —— 下拉选择 */}
+          <select
+            className="md:hidden bg-slate-800 text-sm text-slate-200 rounded-lg px-3 py-1.5 border border-slate-700"
+            onChange={(e) => navigate(e.target.value)}
+            value={location.pathname}
+          >
+            {navItems.map((item) => (
+              <option key={item.path} value={item.path}>{item.label}</option>
+            ))}
+          </select>
+        </div>
+      </header>
+
+      {/* 主内容 */}
+      <main className="flex-1 max-w-7xl mx-auto w-full p-6">
+        {children}
+      </main>
+    </div>
+  )
+}

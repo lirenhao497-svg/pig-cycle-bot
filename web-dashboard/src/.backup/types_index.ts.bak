@@ -1,0 +1,103 @@
+// 猪周期量化监控 - 类型定义
+
+/** 最新行情数据 */
+export interface LatestData {
+  date: string
+  pig_grain_ratio: number
+  muyuan_close: number
+  wenshi_close: number
+  futures_close: number
+  hog_index_close: number
+  muyuan_change?: number
+  futures_change?: number
+  index_change?: number
+  pgr_change?: number
+}
+
+/** 信号状态 */
+export interface SignalData {
+  date: string
+  status: '空仓' | '清仓避险' | '观望'
+  trigger_reason: string | null
+  pgr_golden_cross: boolean
+  muyuan_above_ma20: boolean
+  muyuan_vol_contract: boolean
+  pig_grain_ratio: number
+}
+
+/** 周期阶段 */
+export interface CycleStage {
+  date: string
+  pgr: number
+  stage: string
+  stage_label?: string
+  label?: string
+  bull_count?: number
+  signal_a?: number
+  l1_active?: number
+}
+
+/** 推送日志 */
+export interface TradeLogItem {
+  id: number
+  date: string
+  action: string
+  advice: string
+  pig_grain_ratio?: number
+  interval_label?: string
+  created_at?: string
+}
+
+/** 策略G交易记录 */
+export interface SimPosition {
+  id: number
+  entry_date: string
+  exit_date?: string
+  symbol?: string
+  entry_price: number
+  exit_price?: number
+  profit_pct: number
+  hold_days?: number
+  status: string
+  pgr?: number
+}
+
+/** 模拟盘数据 */
+export interface SimulationData {
+  current: SimPosition[]
+  history: SimPosition[]
+  stats: {
+    total_trades: number
+    win_rate: number
+    avg_return: number
+    max_return: number
+    max_loss: number
+  }
+}
+
+/** 图表时间序列数据点 */
+export interface ChartDataPoint {
+  date: string
+  pig_grain_ratio: number
+  muyuan_close: number
+  wenshi_close: number
+  futures_close: number
+  hog_index_close: number
+}
+
+/** 季节性数据 */
+export interface SeasonalityData {
+  months: number[]
+  avg_pgr: number[]
+  avg_muyuan: number[]
+}
+
+/** L1 观察清单 */
+export interface L1WatchItem {
+  id: number
+  entry_date: string
+  pgr: number
+  consec: number
+  status: string
+  created_at?: string
+}
