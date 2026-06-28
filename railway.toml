@@ -3,7 +3,7 @@
 
 [deploy]
   startCommand = "python railway-entry.py"
-  healthcheckPath = "/"
+  healthcheckPath = "/docs"
   healthcheckInterval = 60
   healthcheckTimeout = 10
   healthcheckRetries = 3
