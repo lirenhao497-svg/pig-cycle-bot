@@ -1,11 +1,11 @@
-﻿import os
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-鐚懆鏈熼噺鍖栫郴缁?- FastAPI 鍚庣
-鎻愪緵 9 涓?/api 鎺ュ彛渚涘墠绔华琛ㄧ洏浣跨敤
+猪周期量化系统 - FastAPI 后端
+提供 9 个 /api 接口供前端仪表盘使用
 """
 import sys; sys.stdout.reconfigure(encoding='utf-8')
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
@@ -14,17 +14,188 @@ import numpy as np
 from datetime import datetime, timedelta
 from typing import Optional
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'hog_data.db')
-app = FastAPI(title="鐚懆鏈熼噺鍖栫郴缁?API", version="2.0")
+# 基于 backend.py 所在位置，指向上一级目录的 data/hog_data.db
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "hog_data.db"))
+app = FastAPI(title="猪周期量化系统API", version="2.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "https://pig-cycle-dashboard.vercel.app"], allow_methods=["*"], allow_headers=["*"])
 
 def get_db():
-    conn = sqlite3.connect(DB)
+    conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA journal_mode=WAL")
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def init_db():
+    """
+    兜底建表：数据库文件或表不存在时自动创建核心表结构。
+    Railway 部署时会调用此函数，确保表存在。
+    """
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA journal_mode=WAL")
+    cur = conn.cursor()
+
+    cur.executescript("""
+        CREATE TABLE IF NOT EXISTS market_daily (
+            date TEXT PRIMARY KEY,
+            pig_grain_ratio REAL,
+            pig_feed_ratio REAL,
+            hog_futures REAL,
+            index_xumu REAL,
+            stock_muyuan REAL,
+            stock_wens REAL,
+            stock_xinxiwang REAL,
+            stock_haida REAL,
+            profit_self INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS market_daily_signals_v2 (
+            date TIMESTAMP PRIMARY KEY,
+            pig_grain_ratio REAL,
+            pig_feed_ratio REAL,
+            hog_futures REAL,
+            index_xumu REAL,
+            stock_muyuan REAL,
+            stock_wens REAL,
+            stock_xinxiwang REAL,
+            stock_haida REAL,
+            profit_self REAL,
+            pgr_ma5 REAL,
+            pgr_ma10 REAL,
+            pgr_ma20 REAL,
+            pgr_ma5_above_ma20 INTEGER,
+            pgr_golden_cross INTEGER,
+            pgr_death_cross INTEGER,
+            pgr_ma5_rising INTEGER,
+            pgr_up_1d INTEGER,
+            pgr_up_3d INTEGER,
+            pgr_up_5d INTEGER,
+            pgr_below_5_0_consec INTEGER,
+            pgr_below_5_5_consec INTEGER,
+            pgr_below_6_0_consec INTEGER,
+            pgr_below_6_5_consec INTEGER,
+            muyuan_ma5 REAL,
+            muyuan_ma20 REAL,
+            muyuan_ma60 REAL,
+            muyuan_golden_cross INTEGER,
+            muyuan_death_cross INTEGER,
+            muyuan_above_ma20 INTEGER,
+            wens_ma5 REAL,
+            wens_ma20 REAL,
+            wens_ma60 REAL,
+            wens_golden_cross INTEGER,
+            wens_death_cross INTEGER,
+            wens_above_ma20 INTEGER,
+            xumu_ma5 REAL,
+            xumu_ma20 REAL,
+            xumu_ma60 REAL,
+            xumu_golden_cross INTEGER,
+            xumu_death_cross INTEGER,
+            xumu_above_ma20 INTEGER,
+            muyuan_ret_20d REAL,
+            muyuan_atr20 REAL,
+            muyuan_atr60 REAL,
+            muyuan_vol_contract INTEGER,
+            muyuan_vol_contract_strict INTEGER,
+            wens_atr20 REAL,
+            wens_atr60 REAL,
+            wens_vol_contract INTEGER,
+            wens_vol_contract_strict INTEGER,
+            xumu_atr20 REAL,
+            xumu_atr60 REAL,
+            xumu_vol_contract INTEGER,
+            xumu_vol_contract_strict INTEGER,
+            futures_ma5 REAL,
+            futures_ma20 REAL,
+            futures_ret_5d REAL,
+            futures_golden_cross INTEGER,
+            futures_death_cross INTEGER,
+            signal_a_muyuan INTEGER,
+            signal_b_wens INTEGER,
+            signal_c_xumu INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS cycle_stage (
+            date TEXT PRIMARY KEY,
+            pgr REAL,
+            stage TEXT,
+            stage_label TEXT,
+            signal_a INTEGER,
+            l1_active INTEGER,
+            bull_count INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS daily_trade_log (
+            date TEXT PRIMARY KEY,
+            pig_grain_ratio REAL,
+            signal_a_muyuan INTEGER,
+            interval_label TEXT,
+            action TEXT,
+            advice TEXT,
+            position_pct INTEGER,
+            stop_loss_pct INTEGER,
+            stock_price REAL,
+            created_at TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS sim_positions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entry_date TEXT NOT NULL,
+            entry_price REAL NOT NULL,
+            pgr REAL,
+            exit_planned TEXT,
+            exit_date TEXT,
+            exit_price REAL,
+            profit_pct REAL,
+            status TEXT DEFAULT 'open',
+            created_at TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS l1_watchlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entry_date TEXT,
+            pgr REAL,
+            muyuan_price REAL,
+            consec_55 REAL,
+            status TEXT DEFAULT 'watching',
+            created_at TEXT,
+            updated_at TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS daily_snapshot (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL UNIQUE,
+            pig_price REAL,
+            lh_futures REAL,
+            corn_price REAL,
+            soybean_meal_price REAL,
+            max_price REAL,
+            max_price_province TEXT,
+            min_price REAL,
+            min_price_province TEXT,
+            price_spread REAL,
+            piglet_price_3way REAL,
+            piglet_price_crossbred REAL,
+            pig_grain_ratio REAL,
+            pig_feed_ratio REAL
+        );
+
+        CREATE TABLE IF NOT EXISTS piglet_price (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT '三元',
+            price REAL NOT NULL,
+            UNIQUE(date, category)
+        );
+    """)
+
+    conn.commit()
+    conn.close()
+    print(f"[init_db] 数据库就绪: {DB_PATH}")
 
 # ========== 杈呭姪鍑芥暟 ==========
 def compute_status(row):
@@ -229,6 +400,11 @@ def api_seasonality():
         "avg_pgr": [round(grp['pig_grain_ratio'].mean().get(str(m).zfill(2), 0), 2) for m in range(1, 13)],
         "avg_muyuan": [round(grp['muyuan_close'].mean().get(str(m).zfill(2), 0), 2) for m in range(1, 13)]
     }
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
 
 if __name__ == '__main__':
     import uvicorn, json
