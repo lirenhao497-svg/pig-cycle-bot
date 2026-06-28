@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 猪周期量化系统 - FastAPI 后端
@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from typing import Optional
+import json
 
 # 基于 backend.py 所在位置，指向上一级目录的 data/hog_data.db
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,6 +35,7 @@ def init_db():
     兜底建表：数据库文件或表不存在时自动创建核心表结构。
     Railway 部署时会调用此函数，确保表存在。
     """
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA journal_mode=WAL")
@@ -199,22 +201,24 @@ def init_db():
 
 # ========== 杈呭姪鍑芥暟 ==========
 def compute_status(row):
-    """璁＄畻褰撳墠淇″彿鐘舵€?""
+    """璁＄畻褰撳墠淇″彿鐘舵€?"""
     pgr = row['pig_grain_ratio']
     sig_a = bool(row.get('pgr_golden_cross', 0)) and bool(row.get('muyuan_above_ma20', 0)) and bool(row.get('muyuan_vol_contract', 0))
     trigger = sig_a and (pgr > 7.0 or pgr < 5.0)
     if trigger:
-        return "娓呬粨閬块櫓", f"鐚伯姣攞pgr:.2f}瑙﹀彂{'楂樹綅' if pgr>7.0 else '浣庝綅'}淇″彿"
+        stage_text = '高价位' if pgr > 7.0 else '低价位'
+        return "清仓避险", f"猪粮比{pgr:.2f}触发{stage_text}信号"
     elif sig_a:
-        return "瑙傛湜", "signal_a 瑙﹀彂浣嗙尓绮瘮鍦ㄩ渿鑽″尯闂?
-    return "绌轰粨", None
+        return "观望", "signal_a 触发但猪粮比在震荡区间"
+    return "空仓", None
+
 
 def get_cycle_stage_label(pgr):
-    if pgr < 4.0: return "娣卞害浜忔崯"
-    elif pgr < 5.0: return "鏋佺浣庝綅"
-    elif pgr < 6.0: return "鍋忓急"
-    elif pgr < 7.0: return "涓€?
-    return "楂樹綅"
+    if pgr < 4.0: return "深度亏损"
+    elif pgr < 5.0: return "极端低位"
+    elif pgr < 6.0: return "偏弱"
+    elif pgr < 7.0: return "中性"
+    return "高位"
 
 # ========== API 鎺ュ彛 ==========
 @app.get("/api/latest")
@@ -407,7 +411,7 @@ def on_startup():
 
 
 if __name__ == '__main__':
-    import uvicorn, json
+    import uvicorn
     print('馃惙 鐚懆鏈熼噺鍖栫郴缁?API 宸插惎鍔? http://localhost:8000')
     print('   Swagger 鏂囨。: http://localhost:8000/docs')
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
