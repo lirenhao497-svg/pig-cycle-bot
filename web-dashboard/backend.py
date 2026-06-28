@@ -1,8 +1,9 @@
+﻿import os
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-猪周期量化系统 - FastAPI 后端
-提供 9 个 /api 接口供前端仪表盘使用
+鐚懆鏈熼噺鍖栫郴缁?- FastAPI 鍚庣
+鎻愪緵 9 涓?/api 鎺ュ彛渚涘墠绔华琛ㄧ洏浣跨敤
 """
 import sys; sys.stdout.reconfigure(encoding='utf-8')
 from fastapi import FastAPI, HTTPException
@@ -13,10 +14,10 @@ import numpy as np
 from datetime import datetime, timedelta
 from typing import Optional
 
-DB = r'C:\Users\ll\.doubao\chats\2026-06-25\new-chat\pig_cycle_bot\data\hog_data.db'
-app = FastAPI(title="猪周期量化系统 API", version="2.0")
+DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'hog_data.db')
+app = FastAPI(title="鐚懆鏈熼噺鍖栫郴缁?API", version="2.0")
 
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "https://pig-cycle-dashboard.vercel.app"], allow_methods=["*"], allow_headers=["*"])
 
 def get_db():
     conn = sqlite3.connect(DB)
@@ -25,32 +26,32 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-# ========== 辅助函数 ==========
+# ========== 杈呭姪鍑芥暟 ==========
 def compute_status(row):
-    """计算当前信号状态"""
+    """璁＄畻褰撳墠淇″彿鐘舵€?""
     pgr = row['pig_grain_ratio']
     sig_a = bool(row.get('pgr_golden_cross', 0)) and bool(row.get('muyuan_above_ma20', 0)) and bool(row.get('muyuan_vol_contract', 0))
     trigger = sig_a and (pgr > 7.0 or pgr < 5.0)
     if trigger:
-        return "清仓避险", f"猪粮比{pgr:.2f}触发{'高位' if pgr>7.0 else '低位'}信号"
+        return "娓呬粨閬块櫓", f"鐚伯姣攞pgr:.2f}瑙﹀彂{'楂樹綅' if pgr>7.0 else '浣庝綅'}淇″彿"
     elif sig_a:
-        return "观望", "signal_a 触发但猪粮比在震荡区间"
-    return "空仓", None
+        return "瑙傛湜", "signal_a 瑙﹀彂浣嗙尓绮瘮鍦ㄩ渿鑽″尯闂?
+    return "绌轰粨", None
 
 def get_cycle_stage_label(pgr):
-    if pgr < 4.0: return "深度亏损"
-    elif pgr < 5.0: return "极端低位"
-    elif pgr < 6.0: return "偏弱"
-    elif pgr < 7.0: return "中性"
-    return "高位"
+    if pgr < 4.0: return "娣卞害浜忔崯"
+    elif pgr < 5.0: return "鏋佺浣庝綅"
+    elif pgr < 6.0: return "鍋忓急"
+    elif pgr < 7.0: return "涓€?
+    return "楂樹綅"
 
-# ========== API 接口 ==========
+# ========== API 鎺ュ彛 ==========
 @app.get("/api/latest")
 def api_latest():
     conn = get_db()
     cur = conn.cursor()
 
-    # 1) 最新交易日数据
+    # 1) 鏈€鏂颁氦鏄撴棩鏁版嵁
     cur.execute("""
         SELECT date, pig_grain_ratio, stock_muyuan as muyuan_close,
                stock_wens as wenshi_close, hog_futures as futures_close,
@@ -65,18 +66,16 @@ def api_latest():
     d = dict(row)
     latest_date = d['date']
 
-    # 2) 猪肉价格 & 仔猪价格
+    # 2) 鐚倝浠锋牸 & 浠旂尓浠锋牸
     cur.execute("SELECT pig_price FROM daily_snapshot WHERE date = ?", (latest_date,))
     snap = cur.fetchone()
     d['pig_price'] = snap['pig_price'] if snap else None
 
-    # piglet_price 表: category='外三元' 是元/头，category='三元' 也是元/头
-    # 前端 Dashboard 需要仔猪价格元/kg，这里用 category='外三元' 的价格
-    cur.execute("SELECT price FROM piglet_price WHERE category=? AND date = ? ORDER BY id DESC LIMIT 1", ('外三元', latest_date))
+    # piglet_price 琛? category='澶栦笁鍏? 鏄厓/澶达紝category='涓夊厓' 涔熸槸鍏?澶?    # 鍓嶇 Dashboard 闇€瑕佷粩鐚环鏍煎厓/kg锛岃繖閲岀敤 category='澶栦笁鍏? 鐨勪环鏍?    cur.execute("SELECT price FROM piglet_price WHERE category=? AND date = ? ORDER BY id DESC LIMIT 1", ('澶栦笁鍏?, latest_date))
     piglet = cur.fetchone()
     d['piglet_price'] = piglet['price'] if piglet else None
 
-    # 3) 周末/节假日回退：如果 muyuan_close 为 null，查上一个交易日
+    # 3) 鍛ㄦ湯/鑺傚亣鏃ュ洖閫€锛氬鏋?muyuan_close 涓?null锛屾煡涓婁竴涓氦鏄撴棩
     d['muyuan_close_is_fallback'] = False
     d['hog_index_close_is_fallback'] = False
     fallback_date = None
@@ -108,8 +107,8 @@ def api_latest():
 
     d['fallback_date'] = fallback_date
 
-    # 4) 涨跌幅：对比前一个交易日
-    # 回退后，前一个交易日应为回退日期的前一个交易日
+    # 4) 娑ㄨ穼骞咃細瀵规瘮鍓嶄竴涓氦鏄撴棩
+    # 鍥為€€鍚庯紝鍓嶄竴涓氦鏄撴棩搴斾负鍥為€€鏃ユ湡鐨勫墠涓€涓氦鏄撴棩
     ref_date = fallback_date if fallback_date else latest_date
     cur.execute("""
         SELECT stock_muyuan, hog_futures, index_xumu, pig_grain_ratio
@@ -233,6 +232,7 @@ def api_seasonality():
 
 if __name__ == '__main__':
     import uvicorn, json
-    print('🐷 猪周期量化系统 API 已启动: http://localhost:8000')
-    print('   Swagger 文档: http://localhost:8000/docs')
+    print('馃惙 鐚懆鏈熼噺鍖栫郴缁?API 宸插惎鍔? http://localhost:8000')
+    print('   Swagger 鏂囨。: http://localhost:8000/docs')
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+
