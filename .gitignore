@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Vercel
+.vercel/
+
+# Logs
+logs/*.log
+
+# Workspace temp files
+_*.py
+_*.ps1
+temp_*.py
+pfsc_page.html
+openclaw-workspace-state.json
+memory/
