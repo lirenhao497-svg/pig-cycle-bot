@@ -344,6 +344,39 @@ class HogDatabase:
             logger.error(f"保存每日快照失败: {e}")
             return False
 
+    def update_daily_snapshot_futures(self, date_str: str, lh_futures: float,
+                                         pig_grain_ratio: float = None,
+                                         pig_feed_ratio: float = None) -> bool:
+        """
+        只更新 daily_snapshot 中指定日期的期货和比值字段，
+        不覆盖已有数据（如仔猪价格、饲料价格等）。
+        解决两次写入 snapshot 导致 lh_futures 被覆盖为 None 的问题。
+        """
+        try:
+            updates = []
+            params = []
+            if lh_futures is not None:
+                updates.append("lh_futures = ?")
+                params.append(lh_futures)
+            if pig_grain_ratio is not None:
+                updates.append("pig_grain_ratio = ?")
+                params.append(pig_grain_ratio)
+            if pig_feed_ratio is not None:
+                updates.append("pig_feed_ratio = ?")
+                params.append(pig_feed_ratio)
+            
+            if not updates:
+                return True
+            
+            params.append(date_str)
+            sql = f"UPDATE daily_snapshot SET {', '.join(updates)} WHERE date = ?"
+            self.cur.execute(sql, params)
+            self.conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"更新 daily_snapshot 期货字段失败: {e}")
+            return False
+
     def get_latest_snapshot(self) -> dict:
         """查询最新的每日快照"""
         self.cur.execute("""

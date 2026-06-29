@@ -71,3 +71,18 @@ class DailySnapshot:
     price_spread: float = None           # 价差（最高-最低）
     pig_grain_ratio: float = None        # 猪粮比（生猪价/玉米价）
     pig_feed_ratio: float = None         # 猪料比（生猪价/(0.6*玉米+0.25*豆粕)）
+
+
+@dataclass
+class MarketDailyRow:
+    """市场日线数据行（对应 market_daily 表）"""
+    date: str
+    pig_grain_ratio: float = None
+    pig_feed_ratio: float = None
+    hog_futures: float = None
+    index_xumu: float = None
+    stock_muyuan: float = None
+    stock_wens: float = None
+    stock_xinxiwang: float = None
+    stock_haida: float = None
+    profit_self: int = None

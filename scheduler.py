@@ -16,7 +16,8 @@ from fetch.futures import FuturesFetcher
 from fetch.piglet_price import PigletPriceFetcher
 from fetch.piglet_price_cpcti import PigletPriceCpctiFetcher
 from storage.db import HogDatabase
-from models.schema import DailySnapshot
+from models.schema import DailySnapshot, MarketDailyRow
+from config import DB_PATH
 from daily_trade_monitor import run_trade_monitor
 from simulate_trading import run_simulate_trading
 from cycle_monitor import run_cycle_monitor
@@ -184,22 +185,14 @@ class TaskScheduler:
         if pig_price and feed_cost > 0:
             pig_feed_ratio = round(pig_price / feed_cost, 2)
         
-        # 保存每日快照
-        snapshot = DailySnapshot(
-            date=datetime.now(),
-            pig_price=pig_price,
+        # 更新每日快照中的期货和比值字段（仅更新，不覆盖已有数据）
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        self.db.update_daily_snapshot_futures(
+            date_str=today_str,
             lh_futures=futures_data.close_price,
-            max_price=self._last_stats.get('max_price'),
-            max_price_province=self._last_stats.get('max_province'),
-            min_price=self._last_stats.get('min_price'),
-            min_price_province=self._last_stats.get('min_province'),
-            price_spread=self._last_stats.get('spread'),
-            corn_price=self._last_corn_price,
-            soybean_meal_price=self._last_meal_price,
             pig_grain_ratio=pig_grain_ratio,
             pig_feed_ratio=pig_feed_ratio
         )
-        self.db.save_daily_snapshot(snapshot)
         
         return True
 
@@ -593,6 +586,9 @@ class TaskScheduler:
             print(f"{'='*50}")
             run_cycle_monitor()
             
+            # 11. 更新 market_daily（让前端看到当天数据）
+            self._update_market_daily()
+            
         except Exception as e:
             print(f"\n❌ 执行出错：{e}")
             logger.error(f"每日任务执行出错: {e}", exc_info=True)
@@ -610,6 +606,145 @@ class TaskScheduler:
         print(f"💾 数据文件：data/hog_data.db")
         print(f"📋 日志文件：logs/app.log")
         print("="*50 + "\n")
+
+    # ========== market_daily 更新 ==========
+    def _update_market_daily(self):
+        """
+        将当日数据合并写入 market_daily 表，供前端 api/latest 读取。
+        只在爬虫完成数据抓取后调用，确保当天数据可见。
+        """
+        print(f"\n{'='*50}")
+        print(f"  [11/11] 更新 market_daily（同步到前端）")
+        print(f"{'='*50}")
+        
+        import sqlite3
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cur = conn.cursor()
+            today = datetime.now().strftime("%Y-%m-%d")
+            
+            # 从 daily_snapshot 取当天数据
+            cur.execute("""
+                SELECT pig_price, lh_futures, corn_price, soybean_meal_price,
+                       pig_grain_ratio, pig_feed_ratio
+                FROM daily_snapshot WHERE date = ?
+            """, (today,))
+            snap = cur.fetchone()
+            
+            if not snap:
+                print(f"  ⚠️ {today} snapshot 不存在，跳过")
+                conn.close()
+                return
+            
+            pig_price_kg = snap[0]
+            lh_futures = snap[1]  # 元/吨
+            pig_grain_ratio = snap[4]
+            pig_feed_ratio = snap[5]
+            
+            # 期货转元/公斤
+            hog_futures_kg = round(lh_futures / 1000, 2) if lh_futures else None
+            
+            # 从 stock_history 取当天股票数据（盘后才有）
+            stock_muyuan = None
+            stock_wens = None
+            cur.execute("""
+                SELECT close FROM stock_history 
+                WHERE date = ? AND code = '002714'
+                LIMIT 1
+            """, (today,))
+            r = cur.fetchone()
+            if r:
+                stock_muyuan = r[0]
+            
+            cur.execute("""
+                SELECT close FROM stock_history 
+                WHERE date = ? AND code = '300498'
+                LIMIT 1
+            """, (today,))
+            r = cur.fetchone()
+            if r:
+                stock_wens = r[0]
+            
+            # 查询之前 day（最近一个有牧原收盘价的）的 profit_self
+            cur.execute("""
+                SELECT profit_self FROM market_daily 
+                WHERE stock_muyuan IS NOT NULL 
+                ORDER BY date DESC LIMIT 1
+            """)
+            r = cur.fetchone()
+            prev_profit = r[0] if r else None
+            
+            # 写入或更新 market_daily
+            # 检查是否存在当天记录
+            cur.execute("SELECT COUNT(*) FROM market_daily WHERE date = ?", (today,))
+            exists = cur.fetchone()[0] > 0
+            
+            if exists:
+                # 更新只合并非空字段（不覆盖已有股票数据）
+                updates = []
+                params = []
+                if pig_grain_ratio is not None:
+                    updates.append("pig_grain_ratio = ?")
+                    params.append(pig_grain_ratio)
+                if pig_feed_ratio is not None:
+                    updates.append("pig_feed_ratio = ?")
+                    params.append(pig_feed_ratio)
+                if hog_futures_kg is not None:
+                    updates.append("hog_futures = ?")
+                    params.append(hog_futures_kg)
+                if stock_muyuan is not None:
+                    updates.append("stock_muyuan = ?")
+                    params.append(stock_muyuan)
+                if stock_wens is not None:
+                    updates.append("stock_wens = ?")
+                    params.append(stock_wens)
+                if prev_profit is not None:
+                    updates.append("profit_self = ?")
+                    params.append(prev_profit)
+                
+                if updates:
+                    params.append(today)
+                    cur.execute(f"UPDATE market_daily SET {', '.join(updates)} WHERE date = ?", params)
+                    print(f"  ✅ market_daily {today} 已更新: {len(updates)} 个字段")
+            else:
+                # 插入新行
+                cur.execute("""
+                    INSERT INTO market_daily 
+                    (date, pig_grain_ratio, pig_feed_ratio, hog_futures,
+                     stock_muyuan, stock_wens, profit_self)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    today, pig_grain_ratio, pig_feed_ratio, hog_futures_kg,
+                    stock_muyuan, stock_wens, prev_profit
+                ))
+                print(f"  ✅ market_daily {today} 已新增")
+            
+            # 检查是否需要更新 market_daily_signals_v2
+            # 如果当天已有猪粮比但 signals 表没有该日数据，补入
+            cur.execute("SELECT COUNT(*) FROM market_daily_signals_v2 WHERE date = ?", (today,))
+            sig_exists = cur.fetchone()[0] > 0
+            if not sig_exists and pig_grain_ratio is not None:
+                # 只插入核心字段，后续由 calculate_signals 补全
+                cur.execute("""
+                    INSERT OR IGNORE INTO market_daily_signals_v2 
+                    (date, pig_grain_ratio, hog_futures, stock_muyuan, stock_wens)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (today, pig_grain_ratio, hog_futures_kg, stock_muyuan, stock_wens))
+                print(f"  ✅ market_daily_signals_v2 {today} 已插入基础数据")
+            
+            conn.commit()
+            conn.close()
+            
+            # 打印摘要
+            print(f"  📊 猪粮比: {pig_grain_ratio}")
+            print(f"  📈 期货: {hog_futures_kg} 元/公斤")
+            print(f"  🏢 牧原: {stock_muyuan} 元")
+            if stock_wens:
+                print(f"  🏢 温氏: {stock_wens} 元")
+            
+        except Exception as e:
+            logger.error(f"更新 market_daily 失败: {e}")
+            print(f"  ❌ 更新 market_daily 失败: {e}")
 
     def run_forever(self, interval=3600):
         """持续运行模式（每小时检查一次）"""
