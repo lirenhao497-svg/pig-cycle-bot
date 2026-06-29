@@ -296,9 +296,6 @@ def api_latest():
                 fallback_date = fb['date']
 
     d['fallback_date'] = fallback_date
-    if fallback_date:
-        d['date'] = fallback_date
-
 
     # 4) 娑ㄨ穼骞咃細瀵规瘮鍓嶄竴涓氦鏄撴棩
     # 鍥為€€鍚庯紝鍓嶄竴涓氦鏄撴棩搴斾负鍥為€€鏃ユ湡鐨勫墠涓€涓氦鏄撴棩

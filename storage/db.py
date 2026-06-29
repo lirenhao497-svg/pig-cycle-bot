@@ -671,6 +671,30 @@ class HogDatabase:
             result.append({"month": row[0], "sow_inventory": row[1], "source": row[2]})
         return result
 
+    def insert_stock_history(self, date_str: str, code: str, name: str,
+                                open_price: float, close_price: float,
+                                high: float, low: float,
+                                volume: int, amount: float,
+                                amplitude: float, change_pct: float,
+                                change_amount: float, turnover: float) -> bool:
+        """插入一条股票日K数据"""
+        try:
+            self.cur.execute("""
+                INSERT OR REPLACE INTO stock_history
+                (date, 股票代码, open, close, high, low, volume, amount,
+                 振幅, 涨跌幅, 涨跌额, turnover, code)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                date_str, f"{code}.SZ", open_price, close_price,
+                high, low, volume, amount, amplitude, change_pct,
+                change_amount, turnover, code
+            ))
+            self.conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"插入股票数据失败 {code}: {e}")
+            return False
+
     def get_latest_sow_inventory(self) -> dict:
         """获取最新能繁母猪存栏"""
         self.cur.execute(
