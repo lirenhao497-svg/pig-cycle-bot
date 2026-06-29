@@ -8,6 +8,8 @@ import sys; sys.stdout.reconfigure(encoding='utf-8')
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 import sqlite3
 import pandas as pd
 import numpy as np
@@ -18,9 +20,22 @@ import json
 # 基于 backend.py 所在位置，指向上一级目录的 data/hog_data.db
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "hog_data.db"))
+FRONTEND_DIST = os.path.join(BASE_DIR, "dist")
 app = FastAPI(title="猪周期量化系统API", version="2.0")
 
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "https://pig-cycle-dashboard.vercel.app"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# 托管前端静态文件
+if os.path.isdir(FRONTEND_DIST):
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
+    
+    @app.get("/")
+    async def serve_frontend():
+        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
+    
+    @app.exception_handler(404)
+    async def spa_fallback(request, exc):
+        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -281,6 +296,9 @@ def api_latest():
                 fallback_date = fb['date']
 
     d['fallback_date'] = fallback_date
+    if fallback_date:
+        d['date'] = fallback_date
+
 
     # 4) 娑ㄨ穼骞咃細瀵规瘮鍓嶄竴涓氦鏄撴棩
     # 鍥為€€鍚庯紝鍓嶄竴涓氦鏄撴棩搴斾负鍥為€€鏃ユ湡鐨勫墠涓€涓氦鏄撴棩
